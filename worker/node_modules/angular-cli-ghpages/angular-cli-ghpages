@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+
+// the standalone version, pure js, no compilation necessary
+
+var path = require('path'),
+  engine = require('./engine/engine'),
+  defaults = require('./engine/defaults').defaults,
+  pjson = require('./package.json'),
+  commander = require('commander');
+
+// defaults-file was ignored for --no-dotfiles, so it is not used here
+// TODO: review https://github.com/tj/commander.js/issues/928 and check again if it now works
+// (this is not a big problem, because true is currently the desired value and this is also the value in the defaults file)
+commander
+  .version(pjson.version)
+  .description(pjson.description)
+  .option(
+    '-d, --dir <dir>',
+    'Directory for all published sources, relative to the current working directory.',
+    defaults.dir
+  )
+  .option(
+    '-r, --repo <repo>',
+    'Provide the repository URL. If no value is provided, a remote of the current working directory is used (defaults to `origin`; see --remote for details).',
+    defaults.repo
+  )
+  .option(
+    '-R, --remote <remote>',
+    'Provide the remote name. If no value is provided, `origin` is used. Has no function if --repo is set.',
+    defaults.remote
+  )
+  .option(
+    '-m, --message <message>',
+    'The commit message, must be wrapped in quotes.',
+    defaults.message
+  )
+  .option(
+    '-b, --branch <branch>',
+    'The git branch to push your pages to.',
+    defaults.branch
+  )
+  .option(
+    '-n, --name <name>',
+    'The git user-name which is associated with this commit.',
+    defaults.name
+  )
+  .option(
+    '-e, --email <email>',
+    'The git user-email which is associated with this commit.',
+    defaults.email
+  )
+  .option(
+    '-S, --no-silent',
+    'Deprecated! This paremeter is no longer needed. It will be ignored.'
+  )
+  .option(
+    '-T, --no-dotfiles',
+    'Includes dotfiles by default. Otherwise files starting with `.` are ignored.',
+  )
+  .option(
+    '--no-notfound',
+    'By default a 404.html file is created, because this is the only known workaround to avoid 404 error messages on GitHub Pages. For Cloudflare Pages we highly recommend to disable the 404.html file by setting this switch to true!',
+  )
+  .option(
+    '--no-nojekyll',
+    'By default a .nojekyll file is created, because we assume you don\'t want to compile the build again with Jekyll.',
+  )
+  .option(
+    '-c, --cname <domain>',
+    'Generate a CNAME file for the specified domain.',
+    defaults.cname
+  )
+  .option(
+    '-a, --add',
+    'Only add, and never remove existing files from the GitHub pages branch.',
+    defaults.add
+  )
+  .option(
+    '--dry-run',
+    'For testing: Run through without making any changes.',
+    defaults.dryRun
+  )
+  .parse(process.argv);
+
+var consoleLogger = {
+  createChild: () => consoleLogger,
+  log: console.log,
+  debug: console.debug,
+  info: console.info,
+  warn: console.warn,
+  error: console.error,
+  fatal: console.error
+};
+
+// !! Important: Commander is renaming the vars here !!
+//
+// adding no param becomes dotfiles: true
+// adding no param becomes notfound: true
+// adding no param becomes nojekyll: true
+// --no-dotfiles becomes dotfiles: false
+// --no-notfound becomes notfound: false
+// --no-nojekyll becomes nojekyll: false
+
+// console.log('*** dotfiles', commander.dotfiles)
+// console.log('*** notfound', commander.notfound)
+// console.log('*** nojekyll', commander.nojekyll)
+
+var dir = path.join(process.cwd(), commander.dir);
+
+engine.run(dir, commander, consoleLogger).catch(function (error) {
+  consoleLogger.error('❌ An error occurred when trying to deploy:');
+  consoleLogger.error(error.message);
+  process.exit(1);
+});

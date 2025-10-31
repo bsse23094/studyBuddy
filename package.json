@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng build --configuration production --base-href=/studyBuddy/ && npx angular-cli-ghpages --dir=dist/study-buddy"
+    "deploy": "ng build --configuration production --base-href=/studyBuddy/ && npx angular-cli-ghpages --dir=dist/study-buddy --repo=https://github.com/bsse23094/studyBuddy.git"
   },
   "private": true,
   "dependencies": {
