@@ -1,6 +1,18 @@
-# StudyBuddy
+# StudyBuddy - AI-Powered Study Tutor
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.0.
+A responsive, mobile-first study helper/tutor web application built with Angular that teaches, quizzes, explains step-by-step, and personalizes learning using RAG (Retrieval-Augmented Generation) over uploaded course materials.
+
+## 🎯 Project Overview
+
+**StudyBuddy** is a front-end-first educational platform that combines:
+- **RAG-enabled tutoring** with accurate, sourced answers from your materials
+- **Adaptive quizzes & flashcards** with spaced repetition (SM-2 algorithm)
+- **Step-by-step problem solving** with hints and worked solutions
+- **Progress tracking** with topic mastery and analytics
+- **Accessible design** (WCAG AA compliant)
+- **Zero-cost deployment** via GitHub Pages + serverless functions
+
+---
 
 ## Development server
 

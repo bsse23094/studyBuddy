@@ -2,12 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>StudyBuddy</title>
+  <title>StudyBuddy - AI-Powered Learning Assistant</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Your AI-powered study companion with interactive tutoring, quizzes, and flashcards">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Lexend+Deca:wght@100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0A0A0A; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;">
+    <div style="width: 48px; height: 48px; border: 2px solid rgba(255,255,255,0.1); border-top-color: rgba(255,255,255,0.8); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+    <p style="margin-top: 1.5rem; font-size: 0.9375rem; font-weight: 500; color: rgba(255,255,255,0.65); font-family: 'Inter', system-ui, sans-serif; letter-spacing: -0.01em;">Loading StudyBuddy...</p>
+  </div>
+  
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+    
+    #loading-screen.loaded {
+      animation: fadeOut 0.5s ease-out 0.5s forwards;
+    }
+  </style>
+  
+  <script>
+    // Hide loading screen when app loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('loaded');
+      }, 500);
+    });
+  </script>
+  
   <app-root></app-root>
 </body>
 </html>
