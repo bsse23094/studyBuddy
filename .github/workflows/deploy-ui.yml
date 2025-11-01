@@ -1,10 +1,12 @@
 name: Deploy UI to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  # Disabled automatic deployment - use manual deployment instead
+  # Run: npm run build && npx angular-cli-ghpages --dir=dist/study-buddy/browser
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:  # Only manual trigger from Actions tab
 
 permissions:
   contents: read
