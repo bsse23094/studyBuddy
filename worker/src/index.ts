@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 
 export interface Env {
   OPENROUTER_API_KEY: string;
+  OPENROUTER_API_KEY: string;
   HF_API_KEY?: string;
   CACHE: KVNamespace;
   RATE_LIMIT: KVNamespace;
@@ -117,7 +118,7 @@ app.post('/api/chat', async (c) => {
       ? `${systemPrompt}\n\nContext: ${body.context}\n\nStudent question: ${userMessage}`
       : `${systemPrompt}\n\nStudent question: ${userMessage}`;
 
-    // Call OpenRouter API with reliable FREE model
+    // Call Requesty API with MiniMax-M2 model
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
@@ -135,12 +136,10 @@ app.post('/api/chat', async (c) => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://bsse23094.github.io',
-          'X-Title': 'StudyBuddy'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'google/gemma-2-9b-it:free',
+          model: 'meta-llama/llama-3.2-3b-instruct:free',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
@@ -206,7 +205,7 @@ app.post('/api/chat', async (c) => {
               timestamp: new Date().toISOString(),
               meta: {
                 mode,
-                modelUsed: 'google/gemma-2-9b-it:free',
+                modelUsed: 'meta-llama/llama-3.2-3b-instruct:free',
                 error: 'empty_response'
               }
             },
@@ -244,7 +243,7 @@ app.post('/api/chat', async (c) => {
             timestamp: new Date().toISOString(),
             meta: {
               mode,
-              modelUsed: 'google/gemma-2-9b-it:free'
+              modelUsed: 'meta-llama/llama-3.2-3b-instruct:free'
             }
           },
           sources: []
@@ -330,12 +329,10 @@ Only return valid JSON, no other text.`;
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://bsse23094.github.io',
-          'X-Title': 'StudyBuddy'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'google/gemma-2-9b-it:free',
+          model: 'meta-llama/llama-3.2-3b-instruct:free',
           messages: [
             { role: 'system', content: 'You are a quiz generator. Return only valid JSON.' },
             { role: 'user', content: prompt }
@@ -515,12 +512,10 @@ Only return valid JSON, no other text.`;
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://bsse23094.github.io',
-          'X-Title': 'StudyBuddy'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'google/gemma-2-9b-it:free',
+          model: 'meta-llama/llama-3.2-3b-instruct:free',
           messages: [
             { role: 'system', content: 'You are a flashcard generator. Return only valid JSON.' },
             { role: 'user', content: prompt }
@@ -660,12 +655,10 @@ Return ONLY a valid JSON object with this structure:
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://bsse23094.github.io',
-        'X-Title': 'StudyBuddy'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
         messages: [
           { role: 'system', content: 'You are a content analyzer. Return only valid JSON.' },
           { role: 'user', content: analysisPrompt }
@@ -745,12 +738,10 @@ Return ONLY a valid JSON object:
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://bsse23094.github.io',
-        'X-Title': 'StudyBuddy'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
         messages: [
           { role: 'system', content: 'You are an educational evaluator. Return only valid JSON.' },
           { role: 'user', content: evaluationPrompt }
@@ -890,11 +881,9 @@ Generate insights in this JSON format:
       headers: {
         'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://bsse23094.github.io',
-        'X-Title': 'StudyBuddy'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
         messages: [
           { role: 'system', content: 'You are an educational analytics assistant. Return only valid JSON.' },
           { role: 'user', content: insightsPrompt }
@@ -981,11 +970,9 @@ Return a JSON object with clustered concepts:
       headers: {
         'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://bsse23094.github.io',
-        'X-Title': 'StudyBuddy'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
         messages: [
           { role: 'system', content: 'You are a concept mapping specialist. Return only valid JSON.' },
           { role: 'user', content: clusterPrompt }
