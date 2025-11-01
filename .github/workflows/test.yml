@@ -1,10 +1,12 @@
 name: Run Tests
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  # Disabled automatic tests - add tests first
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main, develop ]
+  workflow_dispatch:  # Only manual trigger
 
 jobs:
   test-ui:

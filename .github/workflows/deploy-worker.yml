@@ -1,12 +1,13 @@
 name: Deploy Worker to Cloudflare
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'worker/**'
-  workflow_dispatch:
+  # Disabled automatic deployment - deploy manually with: npm run deploy
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'worker/**'
+  workflow_dispatch:  # Only manual trigger
 
 jobs:
   deploy:
