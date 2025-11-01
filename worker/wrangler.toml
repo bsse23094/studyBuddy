@@ -12,7 +12,7 @@ compatibility_date = "2024-01-01"
 ENVIRONMENT = "production"
 MAX_TOKENS = 2048
 DEFAULT_TEMPERATURE = 0.7
-ALLOWED_ORIGINS = "http://localhost:4200,https://yourusername.github.io"
+ALLOWED_ORIGINS = "http://localhost:4200,https://bsse23094.github.io"
 
 # KV namespaces for caching and rate limiting
 [[kv_namespaces]]
