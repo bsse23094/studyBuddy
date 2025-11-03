@@ -61,6 +61,13 @@ import { WelcomeDialogComponent } from '../../components/welcome-dialog/welcome-
             <p>AI-powered daily schedules</p>
             <span class="badge new">New</span>
           </a>
+
+          <a routerLink="/focus" class="mode-card" role="button" aria-label="Focus timer">
+            <div class="icon"><i class="fa-solid fa-bullseye"></i></div>
+            <h3>Focus</h3>
+            <p>Track study sessions with customizable timer</p>
+            <span class="badge new">New</span>
+          </a>
         </div>
       </section>
 

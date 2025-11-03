@@ -295,7 +295,7 @@ interface StorageStats {
                 <i class="fa-solid fa-graduation-cap"></i>
               </div>
               <h3 class="app-name">StudyBuddy</h3>
-              <p class="app-version">Version 1.0.0</p>
+              <p class="app-version">Version 1.1.0</p>
               <p class="app-desc">Your AI-powered study companion for smarter learning</p>
               <div class="app-features">
                 <span class="feature-badge">AI Tutor</span>
@@ -1272,7 +1272,7 @@ export class SettingsComponent implements OnInit {
 
   exportData(): void {
     const data = {
-      version: '1.0.0',
+      version: '1.1.0',
       exportDate: new Date().toISOString(),
       userName: this.settings.userName,
       settings: this.settings,
