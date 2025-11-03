@@ -9,3 +9,4 @@ export * from './quiz.model';
 export * from './flashcard.model';
 export * from './analytics.model';
 export * from './api.model';
+export * from './routine.model';

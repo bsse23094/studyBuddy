@@ -50,7 +50,8 @@ app.get('/', (c) => {
       'POST /api/answers/evaluate',
       'POST /api/flashcards/schedule',
       'POST /api/progress/analytics',
-      'POST /api/concepts/cluster'
+      'POST /api/concepts/cluster',
+      'POST /api/routine/generate'
     ]
   });
 });
@@ -1007,6 +1008,111 @@ Return a JSON object with clustered concepts:
   } catch (error) {
     console.error('Concept clustering error:', error);
     return c.json({ success: false, error: 'Failed to cluster concepts' }, 500);
+  }
+});
+
+// Routine Generation endpoint
+app.post('/api/routine/generate', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { preferences, activities } = body;
+
+    if (!preferences) {
+      return c.json({ success: false, error: 'Preferences are required' }, 400);
+    }
+
+    // Build AI prompt for routine generation
+    const activityList = activities?.map((a: any) => 
+      `- ${a.name} (${a.suggestedDuration} min, ${a.category}${a.isOptional ? ', optional' : ''})`
+    ).join('\n') || '';
+
+    const prompt = `Create an optimized daily schedule with these constraints:
+
+Wake up: ${preferences.wakeUpTime}
+Sleep: ${preferences.sleepTime}
+Study goal: ${preferences.studyGoalHours} hours
+School/Work: ${preferences.schoolOrWorkHours} hours starting at ${preferences.schoolOrWorkStartTime}
+Priority: ${preferences.priorityLevel}
+Break style: ${preferences.breakPreference}
+
+Activities to schedule:
+${activityList}
+
+Requirements:
+1. Schedule must fit within wake-sleep times
+2. Include all non-optional activities
+3. Add ${preferences.breakPreference === 'pomodoro' ? '25-min study blocks with 5-min breaks' : preferences.breakPreference === 'frequent-short' ? '15-min breaks every 90 minutes' : '30-min breaks every 2-3 hours'}
+4. Optimize for ${preferences.priorityLevel} lifestyle
+5. Ensure adequate meal times and rest
+
+Provide the schedule in this exact format for each block:
+[HH:MM-HH:MM] Activity Name | Category | Notes
+
+Example:
+[07:00-08:00] Morning Routine | essential | Get ready, breakfast
+[08:00-10:00] Deep Study | study | Focus time, no distractions
+
+Also provide 3-5 productivity tips at the end.`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a productivity expert helping students create optimal daily schedules. Be specific with times and practical with recommendations.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1500,
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenRouter error:', response.status, errorText);
+      return c.json({ 
+        success: false, 
+        error: 'Failed to generate routine schedule' 
+      }, response.status);
+    }
+
+    const data = await response.json() as any;
+    const aiResponse = data.choices?.[0]?.message?.content || '';
+
+    if (!aiResponse || aiResponse.trim().length === 0) {
+      return c.json({
+        success: false,
+        error: 'AI generated empty response'
+      }, 500);
+    }
+
+    return c.json({
+      success: true,
+      data: {
+        schedule: aiResponse,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Routine generation error:', error);
+    return c.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to generate routine' 
+    }, 500);
   }
 });
 

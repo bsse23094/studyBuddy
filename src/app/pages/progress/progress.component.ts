@@ -114,6 +114,93 @@ interface ActivityDay {
               <h3 class="stat-value">{{ stats.currentStreak }} days</h3>
             </div>
           </div>
+
+          <div class="stat-card">
+            <div class="stat-icon focus-icon">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <p class="stat-label">Focus Time</p>
+              <h3 class="stat-value">{{ formatFocusTime(stats.totalStudyTime) }}</h3>
+            </div>
+          </div>
+        </section>
+
+        <!-- Focus Sessions -->
+        <section class="focus-sessions-section" *ngIf="focusSessions.length > 0">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fa-solid fa-bullseye"></i>
+              Focus Sessions
+            </h2>
+            <p class="section-subtitle">Your recent study sessions</p>
+          </div>
+          <div class="sessions-grid">
+            <div *ngFor="let session of focusSessions.slice(0, 6)" class="session-card">
+              <div class="session-header">
+                <div class="session-topic">
+                  <i class="fa-solid fa-book"></i>
+                  <h3>{{ session.topic }}</h3>
+                </div>
+                <div class="session-duration">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>{{ session.duration }}m</span>
+                </div>
+              </div>
+              <div class="session-date">
+                {{ formatSessionDate(session.startTime) }}
+              </div>
+              <div class="session-subtopics" *ngIf="session.subtopics.length > 0">
+                <h4>Covered Topics:</h4>
+                <div class="subtopics-tags">
+                  <span *ngFor="let subtopic of session.subtopics.slice(0, 4)" class="subtopic-tag">
+                    {{ subtopic }}
+                  </span>
+                  <span *ngIf="session.subtopics.length > 4" class="more-tag">
+                    +{{ session.subtopics.length - 4 }} more
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="section-footer" *ngIf="focusSessions.length > 6">
+            <button class="view-all-btn" (click)="showAllSessions = !showAllSessions">
+              <i class="fa-solid" [class.fa-chevron-down]="!showAllSessions" [class.fa-chevron-up]="showAllSessions"></i>
+              {{ showAllSessions ? 'Show Less' : 'View All Sessions' }}
+            </button>
+          </div>
+        </section>
+
+        <!-- All Sessions (when expanded) -->
+        <section class="all-sessions-section" *ngIf="showAllSessions && focusSessions.length > 6">
+          <div class="sessions-grid">
+            <div *ngFor="let session of focusSessions.slice(6)" class="session-card">
+              <div class="session-header">
+                <div class="session-topic">
+                  <i class="fa-solid fa-book"></i>
+                  <h3>{{ session.topic }}</h3>
+                </div>
+                <div class="session-duration">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>{{ session.duration }}m</span>
+                </div>
+              </div>
+              <div class="session-date">
+                {{ formatSessionDate(session.startTime) }}
+              </div>
+              <div class="session-subtopics" *ngIf="session.subtopics.length > 0">
+                <h4>Covered Topics:</h4>
+                <div class="subtopics-tags">
+                  <span *ngFor="let subtopic of session.subtopics.slice(0, 4)" class="subtopic-tag">
+                    {{ subtopic }}
+                  </span>
+                  <span *ngIf="session.subtopics.length > 4" class="more-tag">
+                    +{{ session.subtopics.length - 4 }} more
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- Activity Heatmap -->
@@ -548,6 +635,167 @@ interface ActivityDay {
       margin-bottom: 3rem;
     }
 
+    /* Focus Sessions Section */
+    .focus-sessions-section {
+      background: #0A0A0A;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .sessions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .session-card {
+      background: #121212;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .session-card:hover {
+      background: #161616;
+      border-color: rgba(212, 175, 55, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .session-topic {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .session-topic i {
+      color: #D4AF37;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .session-topic h3 {
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .session-duration {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .session-duration i {
+      color: #D4AF37;
+      font-size: 0.875rem;
+    }
+
+    .session-duration span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #D4AF37;
+    }
+
+    .session-date {
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 1rem;
+    }
+
+    .session-subtopics h4 {
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0 0 0.75rem 0;
+    }
+
+    .subtopics-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .subtopic-tag {
+      padding: 0.375rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: rgba(255, 255, 255, 0.8);
+      white-space: nowrap;
+    }
+
+    .more-tag {
+      padding: 0.375rem 0.75rem;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: #D4AF37;
+      font-weight: 600;
+    }
+
+    .section-footer {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .view-all-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 10px;
+      color: #D4AF37;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .view-all-btn:hover {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: #D4AF37;
+      transform: translateY(-2px);
+    }
+
+    .all-sessions-section {
+      background: #0A0A0A;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-icon.focus-icon {
+      background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+    }
+
     .quiz-history {
       display: grid;
       gap: 1rem;
@@ -832,6 +1080,8 @@ export class ProgressComponent implements OnInit {
 
   recentQuizzes: QuizHistory[] = [];
   activityDays: ActivityDay[] = [];
+  focusSessions: any[] = [];
+  showAllSessions = false;
 
   ngOnInit() {
     this.loadProgress();
@@ -841,6 +1091,7 @@ export class ProgressComponent implements OnInit {
     this.loadQuizStats();
     this.loadFlashcardStats();
     this.loadDocumentStats();
+    this.loadFocusSessions();
     this.loadActivityData();
     this.calculateStreaks();
   }
@@ -1057,6 +1308,54 @@ export class ProgressComponent implements OnInit {
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
       return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+  }
+
+  private loadFocusSessions() {
+    const sessions = localStorage.getItem('focusSessions');
+    if (sessions) {
+      this.focusSessions = JSON.parse(sessions)
+        .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+      
+      // Calculate total focus time
+      const totalMinutes = this.focusSessions.reduce((sum, session) => sum + session.duration, 0);
+      this.stats.totalStudyTime += totalMinutes;
+    }
+  }
+
+  formatFocusTime(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours >= 24) {
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+        return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+      }
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+  }
+
+  formatSessionDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
   }
 }

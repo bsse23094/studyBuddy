@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 interface Document {
   id: string;
@@ -155,14 +156,40 @@ interface Document {
                 </div>
               } @else if (selectedDocument.type === 'application/pdf') {
                 <div class="pdf-viewer">
-                  <div class="pdf-placeholder">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <p>PDF Preview</p>
-                    <p class="note">{{ selectedDocument.name }}</p>
-                    <button class="action-btn primary" (click)="downloadDocument()">
-                      <i class="fa-solid fa-download"></i>
-                      Download to View
+                  <div class="pdf-controls">
+                    <div class="zoom-controls">
+                      <button class="control-btn" (click)="zoomOut()" title="Zoom Out">
+                        <i class="fa-solid fa-minus"></i>
+                      </button>
+                      <span class="zoom-level">{{ zoomLevel }}%</span>
+                      <button class="control-btn" (click)="zoomIn()" title="Zoom In">
+                        <i class="fa-solid fa-plus"></i>
+                      </button>
+                      <button class="control-btn" (click)="resetZoom()" title="Reset Zoom">
+                        <i class="fa-solid fa-expand"></i>
+                      </button>
+                    </div>
+                    <div class="page-controls" *ngIf="totalPages > 1">
+                      <button class="control-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+                        <i class="fa-solid fa-chevron-left"></i>
+                      </button>
+                      <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
+                      <button class="control-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+                        <i class="fa-solid fa-chevron-right"></i>
+                      </button>
+                    </div>
+                    <button class="control-btn" (click)="toggleFullscreen()" title="Fullscreen">
+                      <i class="fa-solid" [class.fa-expand]="!isFullscreen" [class.fa-compress]="isFullscreen"></i>
                     </button>
+                  </div>
+                  <div class="pdf-content" #pdfContainer [class.fullscreen]="isFullscreen">
+                    <iframe 
+                      [src]="getPdfUrl()" 
+                      [style.transform]="'scale(' + (zoomLevel / 100) + ')'"
+                      [style.width]="(100 / (zoomLevel / 100)) + '%'"
+                      [style.height]="(100 / (zoomLevel / 100)) + '%'"
+                      frameborder="0">
+                    </iframe>
                   </div>
                 </div>
               } @else {
@@ -650,7 +677,129 @@ interface Document {
       letter-spacing: -0.011em;
     }
 
-    .pdf-viewer,
+    .pdf-viewer {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 100%;
+      height: 100%;
+    }
+
+    .pdf-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: #0A0A0A;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .zoom-controls,
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 8px;
+      color: #D4AF37;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 1rem;
+    }
+
+    .control-btn:hover:not(:disabled) {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: rgba(212, 175, 55, 0.5);
+      transform: scale(1.05);
+    }
+
+    .control-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .control-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .zoom-level,
+    .page-info {
+      color: #FFFFFF;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      min-width: 60px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .pdf-content {
+      background: #121212;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 800px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pdf-content.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      border-radius: 0;
+    }
+
+    .pdf-content iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #FFFFFF;
+      transform-origin: center center;
+      transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .pdf-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .pdf-placeholder i {
+      font-size: 5rem;
+      color: rgba(212, 175, 55, 0.3);
+    }
+
+    .pdf-placeholder p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.125rem;
+      margin: 0;
+    }
+
+    .pdf-placeholder .note {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9375rem;
+      font-style: italic;
+    }
+
     .generic-viewer {
       display: flex;
       flex-direction: column;
@@ -658,29 +807,20 @@ interface Document {
       justify-content: center;
       min-height: 600px;
       text-align: center;
-    }
-
-    .pdf-placeholder,
-    .generic-viewer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       gap: 1rem;
     }
 
-    .pdf-placeholder i,
     .generic-viewer i {
       font-size: 5rem;
-      color: #D4AF37;
-      margin-bottom: 1rem;
+      color: rgba(212, 175, 55, 0.3);
     }
 
-    .pdf-placeholder p,
     .generic-viewer p {
       font-family: 'Instrument Sans', sans-serif;
       color: rgba(255, 255, 255, 0.7);
       font-size: 1.25rem;
       margin: 0;
+    }
       letter-spacing: -0.011em;
     }
 
@@ -783,6 +923,14 @@ export class DocumentsComponent implements OnInit {
   isUploading = false;
   uploadProgress = 0;
   uploadError = '';
+  
+  // PDF viewer properties
+  zoomLevel = 100;
+  currentPage = 1;
+  totalPages = 1;
+  isFullscreen = false;
+
+  constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     this.loadDocuments();
@@ -898,10 +1046,16 @@ export class DocumentsComponent implements OnInit {
 
   selectDocument(doc: Document): void {
     this.selectedDocument = doc;
+    this.zoomLevel = 100;
+    this.currentPage = 1;
+    this.isFullscreen = false;
   }
 
   closeViewer(): void {
     this.selectedDocument = null;
+    this.zoomLevel = 100;
+    this.currentPage = 1;
+    this.isFullscreen = false;
   }
 
   deleteDocument(docId: string, event?: Event): void {
@@ -955,5 +1109,50 @@ export class DocumentsComponent implements OnInit {
     if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
     
     return date.toLocaleDateString();
+  }
+
+  // PDF Viewer Methods
+  getPdfUrl(): SafeResourceUrl {
+    if (!this.selectedDocument || this.selectedDocument.type !== 'application/pdf') {
+      return '';
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.selectedDocument.content);
+  }
+
+  zoomIn(): void {
+    if (this.zoomLevel < 200) {
+      this.zoomLevel += 10;
+    }
+  }
+
+  zoomOut(): void {
+    if (this.zoomLevel > 50) {
+      this.zoomLevel -= 10;
+    }
+  }
+
+  resetZoom(): void {
+    this.zoomLevel = 100;
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  toggleFullscreen(): void {
+    this.isFullscreen = !this.isFullscreen;
+    if (this.isFullscreen) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
   }
 }

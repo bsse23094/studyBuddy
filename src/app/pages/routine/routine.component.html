@@ -1,0 +1,627 @@
+<div class="routine-page">
+  <div class="routine-container">
+    
+    <!-- VIEW ALL ROUTINES -->
+    <div *ngIf="currentStep === 'view'" class="view-step">
+      <header class="page-header">
+        <div class="header-content">
+          <i class="fa-solid fa-calendar-days header-icon"></i>
+          <div>
+            <h1 class="page-title">Study Routines</h1>
+            <p class="page-subtitle">AI-powered daily schedules to maximize your productivity</p>
+          </div>
+        </div>
+        <button class="btn-primary" (click)="currentStep = 'select-preset'">
+          <i class="fa-solid fa-plus"></i> Create Routine
+        </button>
+      </header>
+
+      <!-- Active Routine -->
+      <section *ngIf="activeRoutine" class="active-routine-section">
+        <div class="section-badge">
+          <i class="fa-solid fa-star"></i> Active Routine
+        </div>
+        <div class="active-routine-card">
+          <div class="routine-header">
+            <div class="routine-info">
+              <h3>{{ activeRoutine.name }}</h3>
+              <p class="routine-meta">
+                <i class="fa-solid fa-clock"></i> {{ activeRoutine.preferences.studyGoalHours }}h study goal
+                <span class="divider">•</span>
+                <i class="fa-solid fa-moon"></i> {{ activeRoutine.preferences.wakeUpTime }} - {{ activeRoutine.preferences.sleepTime }}
+              </p>
+            </div>
+            <button class="btn-view" (click)="viewSchedule(activeRoutine)">
+              View Schedule <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+          
+          <div class="quick-schedule">
+            <div *ngFor="let block of activeRoutine.schedule.slice(0, 4)" 
+                 class="quick-block"
+                 [class.active]="isCurrentlyActive(block)"
+                 [style.borderLeftColor]="block.color">
+              <div class="block-time">{{ formatTime(block.startTime) }}</div>
+              <div class="block-info">
+                <i class="fa-solid fa-{{block.icon}}"></i>
+                {{ block.activityName }}
+              </div>
+              <div class="block-duration">{{ formatDuration(block.duration) }}</div>
+            </div>
+            <div class="more-blocks" *ngIf="activeRoutine.schedule.length > 4">
+              +{{ activeRoutine.schedule.length - 4 }} more activities
+            </div>
+          </div>
+
+          <div class="ai-suggestions" *ngIf="activeRoutine.aiSuggestions && activeRoutine.aiSuggestions.length > 0">
+            <h4><i class="fa-solid fa-lightbulb"></i> AI Tips</h4>
+            <ul>
+              <li *ngFor="let suggestion of activeRoutine.aiSuggestions.slice(0, 3)">{{ suggestion }}</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- All Routines -->
+      <section class="all-routines-section">
+        <h2>Your Routines</h2>
+        
+        <div *ngIf="routines.length === 0" class="empty-state">
+          <i class="fa-solid fa-calendar-plus"></i>
+          <h3>No routines yet</h3>
+          <p>Create your first AI-powered study routine to get started</p>
+          <button class="btn-primary" (click)="currentStep = 'select-preset'">
+            <i class="fa-solid fa-plus"></i> Create Your First Routine
+          </button>
+        </div>
+
+        <div class="routines-grid" *ngIf="routines.length > 0">
+          <div *ngFor="let routine of routines" class="routine-card">
+            <div class="routine-card-header">
+              <h3>{{ routine.name }}</h3>
+              <div class="routine-actions">
+                <button class="icon-btn" (click)="viewSchedule(routine)" title="View schedule">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="icon-btn" (click)="setAsActive(routine)" 
+                        [class.active]="routine.isActive"
+                        title="Set as active">
+                  <i class="fa-solid fa-star"></i>
+                </button>
+                <button class="icon-btn danger" (click)="deleteRoutine(routine)" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="routine-stats-quick">
+              <div class="stat">
+                <i class="fa-solid fa-book"></i>
+                <span>{{ routine.preferences.studyGoalHours }}h</span>
+              </div>
+              <div class="stat">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>{{ routine.schedule.length }} activities</span>
+              </div>
+              <div class="stat">
+                <i class="fa-solid fa-clock"></i>
+                <span>{{ formatTime(routine.preferences.wakeUpTime) }} - {{ formatTime(routine.preferences.sleepTime) }}</span>
+              </div>
+            </div>
+            
+            <div class="routine-tags">
+              <span class="tag">{{ routine.preferences.priorityLevel }}</span>
+              <span class="tag">{{ routine.preferences.breakPreference }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- SELECT PRESET -->
+    <div *ngIf="currentStep === 'select-preset'" class="select-preset-step">
+      <header class="step-header">
+        <button class="btn-back" (click)="back()">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+        <div>
+          <h2>Choose a Preset</h2>
+          <p>Start with a professionally designed routine template</p>
+        </div>
+      </header>
+
+      <div class="presets-grid">
+        <div *ngFor="let preset of presets" 
+             class="preset-card"
+             (click)="selectPreset(preset)">
+          <div class="preset-icon" [style.backgroundColor]="preset.color">
+            <i class="fa-solid fa-{{preset.icon}}"></i>
+          </div>
+          <h3>{{ preset.name }}</h3>
+          <p>{{ preset.description }}</p>
+          <div class="preset-activities">
+            <span *ngFor="let activity of preset.defaultActivities.slice(0, 3)" class="activity-badge">
+              <i class="fa-solid fa-{{activity.icon}}"></i> {{ activity.name }}
+            </span>
+            <span *ngIf="preset.defaultActivities.length > 3" class="more">
+              +{{ preset.defaultActivities.length - 3 }} more
+            </span>
+          </div>
+          <button class="btn-select">
+            Select Preset <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <div class="preset-card custom" (click)="startCustomRoutine()">
+          <div class="preset-icon">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <h3>Custom Routine</h3>
+          <p>Build your own personalized schedule from scratch</p>
+          <button class="btn-select">
+            Create Custom <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMIZE -->
+    <div *ngIf="currentStep === 'customize'" class="customize-step">
+      <header class="step-header">
+        <button class="btn-back" (click)="back()">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+        <div>
+          <h2>Customize Your Routine</h2>
+          <p>Personalize your schedule to match your lifestyle</p>
+        </div>
+      </header>
+
+      <div class="customize-form">
+        <!-- Routine Name -->
+        <div class="form-section">
+          <h3><i class="fa-solid fa-signature"></i> Routine Name</h3>
+          <input type="text" 
+                 [(ngModel)]="customName" 
+                 class="form-input"
+                 placeholder="e.g., My Study Routine">
+        </div>
+
+        <!-- Time Settings -->
+        <div class="form-section">
+          <h3><i class="fa-solid fa-clock"></i> Daily Schedule</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Wake Up Time</label>
+              <input type="time" [(ngModel)]="preferences.wakeUpTime" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Sleep Time</label>
+              <input type="time" [(ngModel)]="preferences.sleepTime" class="form-input">
+            </div>
+            <div class="form-field">
+              <label>Study Goal (hours/day)</label>
+              <div class="number-input-wrapper">
+                <button type="button" class="number-btn decrement" (click)="adjustStudyHours(-0.5)">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <input type="number" 
+                       [(ngModel)]="preferences.studyGoalHours" 
+                       min="1" max="12" step="0.5"
+                       class="form-input number-input">
+                <button type="button" class="number-btn increment" (click)="adjustStudyHours(0.5)">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-field">
+              <label>School/Work Hours</label>
+              <div class="number-input-wrapper">
+                <button type="button" class="number-btn decrement" (click)="adjustWorkHours(-0.5)">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <input type="number" 
+                       [(ngModel)]="preferences.schoolOrWorkHours" 
+                       min="0" max="12" step="0.5"
+                       class="form-input number-input">
+                <button type="button" class="number-btn increment" (click)="adjustWorkHours(0.5)">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <div class="form-field" *ngIf="preferences.schoolOrWorkHours > 0">
+              <label>School/Work Start Time</label>
+              <input type="time" [(ngModel)]="preferences.schoolOrWorkStartTime" class="form-input">
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority & Breaks -->
+        <div class="form-section">
+          <h3><i class="fa-solid fa-sliders"></i> Preferences</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Priority Level</label>
+              <select [(ngModel)]="preferences.priorityLevel" class="form-select">
+                <option value="relaxed">Relaxed</option>
+                <option value="balanced">Balanced</option>
+                <option value="study-focused">Study-Focused</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Break Style</label>
+              <select [(ngModel)]="preferences.breakPreference" class="form-select">
+                <option value="frequent-short">Frequent Short Breaks</option>
+                <option value="few-long">Few Long Breaks</option>
+                <option value="pomodoro">Pomodoro (25/5)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activities -->
+        <div class="form-section">
+          <h3><i class="fa-solid fa-list-check"></i> Activities to Include</h3>
+          <p class="form-hint">Select the activities you want in your daily routine</p>
+          <div class="activities-grid">
+            <button *ngFor="let activity of availableActivities"
+                    class="activity-card"
+                    [class.selected]="isActivitySelected(activity.name)"
+                    [class.required]="!activity.isOptional"
+                    (click)="toggleActivity(activity.name)">
+              <div class="activity-icon" [style.backgroundColor]="activity.color">
+                <i class="fa-solid fa-{{activity.icon}}"></i>
+              </div>
+              <div class="activity-info">
+                <span class="activity-name">{{ activity.name }}</span>
+                <span class="activity-duration">{{ activity.suggestedDuration }}m</span>
+              </div>
+              <div class="activity-check">
+                <i class="fa-solid fa-check"></i>
+              </div>
+              <span *ngIf="!activity.isOptional" class="required-badge">Required</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" (click)="back()">Cancel</button>
+          <button class="btn-primary" (click)="generatePreview()" [disabled]="isCreating">
+            <i class="fa-solid" [class.fa-wand-magic-sparkles]="!isCreating" [class.fa-spinner]="isCreating" [class.fa-spin]="isCreating"></i>
+            {{ isCreating ? 'Generating...' : 'Generate Schedule' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div *ngIf="currentStep === 'preview' && previewRoutine" class="preview-step">
+      <header class="step-header">
+        <button class="btn-back" (click)="back()">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+        <div>
+          <h2>Preview Your Routine</h2>
+          <p>Review your AI-generated schedule</p>
+        </div>
+      </header>
+
+      <div class="preview-content">
+        <!-- Stats Overview -->
+        <div class="stats-overview" *ngIf="routineStats">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #4F46E5;">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ routineStats.totalStudyHours }}h</span>
+              <span class="stat-label">Study Time</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #10B981;">
+              <i class="fa-solid fa-bed"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ routineStats.totalSleepHours }}h</span>
+              <span class="stat-label">Sleep Time</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" [style.background]="getScoreColor(routineStats.balanceScore)">
+              <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ routineStats.balanceScore }}</span>
+              <span class="stat-label">Balance Score</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" [style.background]="getScoreColor(routineStats.productivityScore)">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ routineStats.productivityScore }}</span>
+              <span class="stat-label">Productivity</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Timeline -->
+        <div class="schedule-section">
+          <h3><i class="fa-solid fa-calendar-days"></i> Your Daily Schedule</h3>
+          <div class="schedule-list">
+            <div *ngFor="let block of previewRoutine.schedule" class="schedule-item">
+              <div class="schedule-time">
+                <span class="time">{{ formatTime(block.startTime) }}</span>
+                <span class="duration">{{ formatDuration(block.duration) }}</span>
+              </div>
+              <div class="schedule-content">
+                <div class="schedule-bar" [style.backgroundColor]="block.color"></div>
+                <div class="schedule-info">
+                  <div class="schedule-header">
+                    <i class="fa-solid fa-{{block.icon}}" [style.color]="block.color"></i>
+                    <span class="schedule-name">{{ block.activityName }}</span>
+                    <span class="schedule-category">{{ block.category }}</span>
+                  </div>
+                  <p class="schedule-notes">{{ getActivityDescription(block) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="recommendations-section" *ngIf="routineStats && routineStats.recommendations.length > 0">
+          <h3><i class="fa-solid fa-lightbulb"></i> AI Recommendations</h3>
+          <div class="recommendation-list">
+            <div *ngFor="let rec of routineStats.recommendations" class="recommendation-item">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>{{ rec }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Tips -->
+        <div class="ai-tips-section" *ngIf="previewRoutine.aiSuggestions && previewRoutine.aiSuggestions.length > 0">
+          <h3><i class="fa-solid fa-sparkles"></i> AI-Powered Tips</h3>
+          <div class="tips-list">
+            <div *ngFor="let tip of previewRoutine.aiSuggestions" class="tip-item">
+              <i class="fa-solid fa-check-circle"></i>
+              <span>{{ tip }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-actions">
+          <button class="btn-secondary" (click)="back()">
+            <i class="fa-solid fa-pencil"></i> Edit Preferences
+          </button>
+          <button class="btn-primary" (click)="saveRoutine()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Routine
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE VIEW (Full Detailed View) -->
+    <div *ngIf="currentStep === 'schedule-view' && viewingRoutine" class="schedule-view-step">
+      <header class="step-header">
+        <button class="btn-back" (click)="back()">
+          <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+        <div>
+          <h2>{{ viewingRoutine.name }}</h2>
+          <p>Your optimized daily schedule with AI-powered insights</p>
+        </div>
+      </header>
+
+      <div class="schedule-view-content">
+        <!-- Main Timeline Section -->
+        <div class="timeline-container">
+          <div class="timeline-header">
+            <div class="current-time-indicator">
+              <i class="fa-solid fa-clock"></i>
+              <span>{{ formatTime(currentTime) }}</span>
+            </div>
+            <div class="stats-mini" *ngIf="routineStats">
+              <span class="stat-mini">
+                <i class="fa-solid fa-book"></i> 
+                <strong>{{ routineStats.totalStudyHours }}h</strong> study
+              </span>
+              <span class="stat-mini">
+                <i class="fa-solid fa-bed"></i> 
+                <strong>{{ routineStats.totalSleepHours }}h</strong> sleep
+              </span>
+              <span class="stat-mini">
+                <i class="fa-solid fa-scale-balanced"></i> 
+                <strong>{{ routineStats.balanceScore }}</strong>/100 balance
+              </span>
+            </div>
+          </div>
+
+          <!-- Enhanced Schedule List -->
+          <div class="enhanced-schedule-list">
+            <div *ngFor="let block of viewingRoutine.schedule; let i = index" 
+                 class="enhanced-schedule-item"
+                 [class.active]="isCurrentlyActive(block)"
+                 [class.morning]="getMorningStatus(block.startTime) === 'morning'"
+                 [class.afternoon]="getMorningStatus(block.startTime) === 'afternoon'"
+                 [class.evening]="getMorningStatus(block.startTime) === 'evening'">
+              
+              <!-- Time Section -->
+              <div class="schedule-time-section">
+                <div class="time-badge" [style.borderColor]="block.color">
+                  <div class="time-main">{{ formatTime(block.startTime) }}</div>
+                  <div class="time-period">{{ getTimePeriod(block.startTime) }}</div>
+                </div>
+                <div class="time-range-text">
+                  <span class="range">{{ getTimeRange(block.startTime, block.duration) }}</span>
+                  <span class="duration-badge" [style.backgroundColor]="block.color + '33'">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    {{ formatDuration(block.duration) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Activity Section -->
+              <div class="schedule-activity-section">
+                <div class="activity-header">
+                  <div class="activity-icon-large" [style.backgroundColor]="block.color">
+                    <i class="fa-solid fa-{{block.icon}}"></i>
+                  </div>
+                  <div class="activity-title-group">
+                    <h4 class="activity-title">{{ block.activityName }}</h4>
+                    <div class="activity-meta">
+                      <span class="category-tag" [style.backgroundColor]="block.color + '22'" [style.color]="block.color">
+                        <i class="fa-solid fa-tag"></i>
+                        {{ block.category }}
+                      </span>
+                      <span class="flexible-tag" *ngIf="block.isFlexible">
+                        <i class="fa-solid fa-shuffle"></i>
+                        Flexible
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="activity-description">
+                  <i class="fa-solid fa-circle-info"></i>
+                  {{ getActivityDescription(block) }}
+                </p>
+
+                <!-- Progress Indicator for Active Block -->
+                <div class="activity-progress" *ngIf="isCurrentlyActive(block)">
+                  <div class="progress-bar-container">
+                    <div class="progress-bar" [style.backgroundColor]="block.color"></div>
+                  </div>
+                  <span class="progress-text">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    Currently in progress
+                  </span>
+                </div>
+              </div>
+
+              <!-- Connector Line -->
+              <div class="schedule-connector" *ngIf="i < viewingRoutine.schedule.length - 1">
+                <div class="connector-line"></div>
+                <div class="connector-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced Sidebar -->
+        <div class="schedule-sidebar-enhanced">
+          <!-- Quick Stats Card -->
+          <div class="sidebar-card-modern">
+            <div class="card-header">
+              <i class="fa-solid fa-chart-pie"></i>
+              <h4>Daily Overview</h4>
+            </div>
+            <div class="overview-stats">
+              <div class="overview-stat">
+                <div class="stat-icon-circle" style="background: linear-gradient(135deg, #4F46E5, #7C3AED);">
+                  <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-number">{{ viewingRoutine.schedule.length }}</span>
+                  <span class="stat-label">Total Activities</span>
+                </div>
+              </div>
+              
+              <div class="overview-stat">
+                <div class="stat-icon-circle" style="background: linear-gradient(135deg, #D4AF37, #FFD700);">
+                  <i class="fa-solid fa-book"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-number">{{ viewingRoutine.preferences.studyGoalHours }}h</span>
+                  <span class="stat-label">Study Goal</span>
+                </div>
+              </div>
+              
+              <div class="overview-stat">
+                <div class="stat-icon-circle" style="background: linear-gradient(135deg, #10B981, #34D399);">
+                  <i class="fa-solid fa-moon"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-number">{{ routineStats?.totalSleepHours || 8 }}h</span>
+                  <span class="stat-label">Sleep Time</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences Card -->
+          <div class="sidebar-card-modern">
+            <div class="card-header">
+              <i class="fa-solid fa-sliders"></i>
+              <h4>Your Preferences</h4>
+            </div>
+            <div class="preference-list">
+              <div class="preference-item">
+                <i class="fa-solid fa-bullseye"></i>
+                <div class="preference-content">
+                  <span class="preference-label">Priority Level</span>
+                  <span class="preference-value">{{ viewingRoutine.preferences.priorityLevel }}</span>
+                </div>
+              </div>
+              <div class="preference-item">
+                <i class="fa-solid fa-mug-hot"></i>
+                <div class="preference-content">
+                  <span class="preference-label">Break Style</span>
+                  <span class="preference-value">{{ viewingRoutine.preferences.breakPreference }}</span>
+                </div>
+              </div>
+              <div class="preference-item">
+                <i class="fa-solid fa-sunrise"></i>
+                <div class="preference-content">
+                  <span class="preference-label">Wake Up</span>
+                  <span class="preference-value">{{ formatTime(viewingRoutine.preferences.wakeUpTime) }}</span>
+                </div>
+              </div>
+              <div class="preference-item">
+                <i class="fa-solid fa-moon"></i>
+                <div class="preference-content">
+                  <span class="preference-label">Sleep Time</span>
+                  <span class="preference-value">{{ formatTime(viewingRoutine.preferences.sleepTime) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Tips Card -->
+          <div class="sidebar-card-modern" *ngIf="viewingRoutine.aiSuggestions && viewingRoutine.aiSuggestions.length > 0">
+            <div class="card-header">
+              <i class="fa-solid fa-sparkles"></i>
+              <h4>AI-Powered Tips</h4>
+            </div>
+            <ul class="ai-tips-list">
+              <li *ngFor="let tip of viewingRoutine.aiSuggestions.slice(0, 4)" class="tip-item-modern">
+                <div class="tip-icon">
+                  <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <span class="tip-text">{{ tip }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Category Legend -->
+          <div class="sidebar-card-modern">
+            <div class="card-header">
+              <i class="fa-solid fa-palette"></i>
+              <h4>Activity Categories</h4>
+            </div>
+            <div class="category-legend">
+              <div class="legend-item" *ngFor="let category of ['study', 'essential', 'health', 'leisure', 'social', 'work']">
+                <span class="legend-color" [style.backgroundColor]="getCategoryColor(category)"></span>
+                <span class="legend-label">{{ category }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

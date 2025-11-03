@@ -341,4 +341,31 @@ export class StorageService {
       exportedAt: new Date().toISOString()
     };
   }
+
+  // Generic key-value storage methods for miscellaneous data
+  async get<T>(key: string): Promise<T | null> {
+    try {
+      const value = localStorage.getItem(`studybuddy_${key}`);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      console.error('Storage get error:', error);
+      return null;
+    }
+  }
+
+  async set<T>(key: string, value: T): Promise<void> {
+    try {
+      localStorage.setItem(`studybuddy_${key}`, JSON.stringify(value));
+    } catch (error) {
+      console.error('Storage set error:', error);
+    }
+  }
+
+  async remove(key: string): Promise<void> {
+    try {
+      localStorage.removeItem(`studybuddy_${key}`);
+    } catch (error) {
+      console.error('Storage remove error:', error);
+    }
+  }
 }

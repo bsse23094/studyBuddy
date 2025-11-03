@@ -54,6 +54,13 @@ import { WelcomeDialogComponent } from '../../components/welcome-dialog/welcome-
             <h3>Documents</h3>
             <p>Upload and manage study materials</p>
           </a>
+
+          <a routerLink="/routine" class="mode-card" role="button" aria-label="Create study routine">
+            <div class="icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <h3>Study Routine</h3>
+            <p>AI-powered daily schedules</p>
+            <span class="badge new">New</span>
+          </a>
         </div>
       </section>
 
