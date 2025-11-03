@@ -10,7 +10,9 @@
         <span class="brand-text">StudyBuddy</span>
       </a>
     </div>
-    <ul class="nav-links">
+
+    <!-- Desktop Navigation -->
+    <ul class="nav-links desktop-nav">
       <li><a routerLink="/home" routerLinkActive="active" class="nav-link">
         <i class="fas fa-home"></i> Home
       </a></li>
@@ -37,6 +39,74 @@
       </a></li>
       <li><a routerLink="/settings" routerLinkActive="active" class="nav-link">
         <i class="fas fa-cog"></i> Settings
+      </a></li>
+    </ul>
+
+    <!-- Mobile Hamburger Menu -->
+    <div class="mobile-menu-container">
+      <button 
+        class="hamburger-btn" 
+        (click)="toggleMobileMenu()"
+        [class.active]="isMobileMenuOpen"
+        aria-label="Toggle mobile menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" 
+       *ngIf="isMobileMenuOpen" 
+       (click)="closeMobileMenu()">
+  </div>
+
+  <!-- Mobile Menu Panel -->
+  <nav class="mobile-menu-panel" [class.open]="isMobileMenuOpen" role="navigation" aria-label="Mobile navigation">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-title">Navigation</span>
+      <button class="close-btn" (click)="closeMobileMenu()" aria-label="Close menu">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <ul class="mobile-nav-links">
+      <li><a routerLink="/home" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a></li>
+      <li><a routerLink="/chat" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-comment-dots"></i>
+        <span>Chat</span>
+      </a></li>
+      <li><a routerLink="/quiz" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-brain"></i>
+        <span>Quiz</span>
+      </a></li>
+      <li><a routerLink="/flashcards" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-layer-group"></i>
+        <span>Flashcards</span>
+      </a></li>
+      <li><a routerLink="/documents" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-folder-open"></i>
+        <span>Documents</span>
+      </a></li>
+      <li><a routerLink="/progress" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-chart-line"></i>
+        <span>Progress</span>
+      </a></li>
+      <li><a routerLink="/routine" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-calendar-days"></i>
+        <span>Routine</span>
+      </a></li>
+      <li><a routerLink="/focus" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-bullseye"></i>
+        <span>Focus</span>
+      </a></li>
+      <li><a routerLink="/settings" routerLinkActive="active" class="mobile-nav-link" (click)="closeMobileMenu()">
+        <i class="fas fa-cog"></i>
+        <span>Settings</span>
       </a></li>
     </ul>
   </nav>
