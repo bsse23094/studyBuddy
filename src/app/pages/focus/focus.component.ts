@@ -61,14 +61,28 @@ interface FocusSession {
                   {{ preset }}m
                 </button>
               </div>
-              <input 
-                type="number" 
-                id="duration" 
-                [(ngModel)]="currentSession.duration"
-                min="1" 
-                max="240"
-                placeholder="Custom duration"
-                class="input-field custom-duration">
+              <div class="number-input-wrapper">
+                <button 
+                  class="control-btn decrement" 
+                  (click)="adjustDuration(-5)"
+                  type="button">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <input 
+                  type="number" 
+                  id="duration" 
+                  [(ngModel)]="currentSession.duration"
+                  min="1" 
+                  max="240"
+                  placeholder="Custom duration"
+                  class="input-field custom-duration">
+                <button 
+                  class="control-btn increment" 
+                  (click)="adjustDuration(5)"
+                  type="button">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
             </div>
 
             <div class="form-group">
@@ -447,6 +461,65 @@ interface FocusSession {
 
     .custom-duration {
       margin-top: 0.5rem;
+    }
+
+    .number-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .number-input-wrapper .input-field {
+      flex: 1;
+      margin: 0;
+      text-align: center;
+      font-size: 1.125rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+    }
+
+    /* Hide default number input spinners */
+    .number-input-wrapper input[type="number"]::-webkit-inner-spin-button,
+    .number-input-wrapper input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .number-input-wrapper input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    .control-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 100%);
+      border: none;
+      border-radius: 8px;
+      color: #0A0A0A;
+      font-size: 1.125rem;
+      cursor: pointer;
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+      flex-shrink: 0;
+    }
+
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+    }
+
+    .control-btn:active {
+      transform: translateY(0);
+    }
+
+    .control-btn i {
+      font-size: 0.875rem;
+      font-weight: bold;
     }
 
     .clock-styles {
@@ -1401,6 +1474,13 @@ export class FocusComponent implements OnInit, OnDestroy {
 
   setDuration(minutes: number) {
     this.currentSession.duration = minutes;
+  }
+
+  adjustDuration(change: number) {
+    const newDuration = this.currentSession.duration + change;
+    if (newDuration >= 1 && newDuration <= 240) {
+      this.currentSession.duration = newDuration;
+    }
   }
 
   startSession() {
