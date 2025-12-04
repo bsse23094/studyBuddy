@@ -30,8 +30,8 @@ wrangler kv:namespace create "RATE_LIMIT"
 # Copy IDs to wrangler.toml
 
 # 3. Set secrets
-wrangler secret put OPENROUTER_API_KEY
-# Get key: https://openrouter.ai/keys
+wrangler secret put GEMINI_API_KEY
+# Get key: https://aistudio.google.com/apikey
 
 # 4. Update CORS in wrangler.toml
 # ALLOWED_ORIGINS = "https://YOUR_USERNAME.github.io"
@@ -106,7 +106,7 @@ curl http://localhost:8787/api/health
 ## Free Tier Limits
 
 - Cloudflare Workers: **100K requests/day** ✅
-- OpenRouter (Llama 3.1): **Free** ✅
+- Google Gemini 2.0 Flash: **Free tier available** ✅
 - Cloudflare KV: **100K reads/day** ✅
 - GitHub Pages: **Unlimited** ✅
 
@@ -119,7 +119,7 @@ curl http://localhost:8787/api/health
 
 ### "AI provider not available"
 → Check: `wrangler secret list`  
-→ Verify key at: https://openrouter.ai/keys
+→ Verify key at: https://aistudio.google.com/apikey
 
 ### Rate limit exceeded
 → Wait 1 minute or increase in `worker/src/index.ts`
@@ -139,7 +139,7 @@ curl http://localhost:8787/api/health
 
 - GitHub Issues: [Create Issue](https://github.com/YOUR_USERNAME/studybuddy/issues)
 - Cloudflare Docs: https://developers.cloudflare.com/workers/
-- OpenRouter Docs: https://openrouter.ai/docs
+- Gemini API Docs: https://ai.google.dev/docs
 
 ---
 

@@ -15,7 +15,7 @@ Deploy the full StudyBuddy application: Angular frontend on GitHub Pages + Cloud
 │  │  (Static)    │            │  (Edge)      │          │
 │  └──────────────┘            └──────────────┘          │
 │         │                            │                  │
-│         │                            ├─> OpenRouter     │
+│         │                            ├─> Google Gemini  │
 │         │                            ├─> Hugging Face   │
 │         │                            └─> KV Storage     │
 │         │                                               │
@@ -72,9 +72,9 @@ preview_id = "<YOUR_RATE_LIMIT_PREVIEW_ID_HERE>"
 
 ### Step 3: Get API Keys
 
-#### OpenRouter (Required - Free Tier)
-1. Go to: https://openrouter.ai/keys
-2. Sign up with Google/GitHub
+#### Google Gemini (Required - Free Tier)
+1. Go to: https://aistudio.google.com/apikey
+2. Sign in with Google account
 3. Create new API key
 4. Copy the key
 
@@ -88,9 +88,9 @@ preview_id = "<YOUR_RATE_LIMIT_PREVIEW_ID_HERE>"
 ```bash
 cd worker
 
-# Required: OpenRouter API Key
-wrangler secret put OPENROUTER_API_KEY
-# Paste your OpenRouter key when prompted
+# Required: Gemini API Key
+wrangler secret put GEMINI_API_KEY
+# Paste your Gemini key when prompted
 
 # Optional: Hugging Face (for fallback)
 wrangler secret put HF_API_KEY
@@ -278,7 +278,7 @@ Expected:
   "success": true,
   "status": "healthy",
   "services": {
-    "openRouter": "configured",
+    "gemini": "configured",
     "cache": "available",
     "rateLimit": "available"
   }
@@ -326,9 +326,9 @@ cd worker
 wrangler secret list
 
 # If missing, add it
-wrangler secret put OPENROUTER_API_KEY
+wrangler secret put GEMINI_API_KEY
 
-# Get new key at: https://openrouter.ai/keys
+# Get new key at: https://aistudio.google.com/apikey
 ```
 
 ### ❌ GitHub Pages 404
@@ -438,7 +438,7 @@ git push origin main
 |---------|-----------|------------|------|
 | GitHub Pages | Unlimited public repos | 1 repo | $0 |
 | Cloudflare Workers | 100K req/day | ~1K req/day | $0 |
-| OpenRouter (Llama 3.1) | Free tier | ~500 req/day | $0 |
+| Google Gemini 2.0 Flash | Free tier | ~500 req/day | $0 |
 | Cloudflare KV | 100K reads/day | ~2K reads/day | $0 |
 | **Total** | | | **$0/month** 🎉 |
 
@@ -464,7 +464,7 @@ git push origin main
 ## Resources
 
 - Cloudflare Workers Docs: https://developers.cloudflare.com/workers/
-- OpenRouter Docs: https://openrouter.ai/docs
+- Gemini API Docs: https://ai.google.dev/docs
 - Angular Deployment: https://angular.dev/cli/deployment
 - GitHub Pages: https://pages.github.com/
 

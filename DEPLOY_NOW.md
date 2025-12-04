@@ -1,14 +1,13 @@
 # 🚀 Quick Deploy Instructions
 
 ## Your Setup Status
-✅ KV Namespaces Created:
-- CACHE: `69a623e78bcb4b9e8f244b0724cfb629`
-- RATE_LIMIT: `395cadf8d23d46d68fed1e33304904ab`
+✅ KV Namespaces Created (check wrangler.toml for IDs)
 
-✅ OpenRouter API Key Ready:
-- `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`
+✅ Using Google Gemini 2.0 Flash API
 
 ✅ wrangler.toml Updated with KV IDs
+
+**Note:** API keys should be set as secrets, never in code!
 
 ## Next: Get API Token for Deployment
 
@@ -43,16 +42,14 @@ This should now work! You'll see:
 ✨ Successfully published to https://studybuddy-worker.YOUR_SUBDOMAIN.workers.dev
 ```
 
-### Step 4: Set OpenRouter API Key
+### Step 4: Set Gemini API Key
 
 ```powershell
-npx wrangler secret put OPENROUTER_API_KEY
+npx wrangler secret put GEMINI_API_KEY
 ```
 
-When prompted, paste:
-```
-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
-```
+When prompted, paste your Gemini API key.
+Get one at: https://aistudio.google.com/apikey
 
 ### Step 5: Test Your Worker
 
@@ -94,7 +91,7 @@ GitHub Actions will automatically deploy your worker!
 
 ✅ Worker code complete  
 ✅ KV namespaces created and configured  
-✅ OpenRouter API key ready  
+✅ Using Gemini API  
 ⬜ Deploy worker  
 ⬜ Set API key as secret  
 ⬜ Update frontend with worker URL  

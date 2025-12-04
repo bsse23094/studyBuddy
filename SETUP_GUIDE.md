@@ -1,11 +1,11 @@
 # 🔧 Worker Setup - Step by Step
 
-## Your OpenRouter API Key
-```
-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
-```
+## API Key Setup (Gemini)
 
-**⚠️ IMPORTANT**: This key will be stored securely as a Cloudflare secret (encrypted). Never commit it to git!
+**⚠️ IMPORTANT**: Your API key should NEVER be committed to git or exposed in code!
+
+1. Get a Gemini API key from: https://aistudio.google.com/apikey
+2. Store it securely as a Cloudflare secret (see Step 8)
 
 ---
 
@@ -105,14 +105,11 @@ Published studybuddy-worker (X.XX sec)
 ### Step 8: Set API Key Secret
 
 ```powershell
-# Set the OpenRouter API key as a secret
-npx wrangler secret put OPENROUTER_API_KEY
+# Set the Gemini API key as a secret
+npx wrangler secret put GEMINI_API_KEY
 ```
 
-When prompted, paste your API key:
-```
-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
-```
+When prompted, paste your Gemini API key (get one from https://aistudio.google.com/apikey)
 
 ### Step 9: Test Your Worker
 
@@ -127,7 +124,7 @@ You should see:
   "success": true,
   "status": "healthy",
   "services": {
-    "openRouter": "configured",
+    "gemini": "configured",
     "cache": "available",
     "rateLimit": "available"
   }
@@ -179,7 +176,7 @@ If manual deployment doesn't work, you can use GitHub Actions:
 → Check your API token has "Edit Cloudflare Workers" permissions
 
 ### Worker deploys but health check fails
-→ Make sure you ran `npx wrangler secret put OPENROUTER_API_KEY`
+→ Make sure you ran `npx wrangler secret put GEMINI_API_KEY`
 
 ---
 
@@ -195,21 +192,16 @@ After worker is deployed:
 
 ---
 
-## Your Credentials (Keep Safe!)
+## API Key Security Best Practices
 
-**OpenRouter API Key:**
-```
-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
-```
-
-**Where it's stored:**
-- ✅ Encrypted in Cloudflare (via `wrangler secret put`)
+**Where your key should be stored:**
+- ✅ Encrypted in Cloudflare (via `wrangler secret put GEMINI_API_KEY`)
 - ❌ NOT in your code
 - ❌ NOT in git
 - ❌ NOT in wrangler.toml
 
-**Test your key:**
-Visit https://openrouter.ai/keys and check if it shows "Active"
+**Get your key:**
+Visit https://aistudio.google.com/apikey to create or manage your Gemini API key
 
 ---
 
