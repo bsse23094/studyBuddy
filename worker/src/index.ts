@@ -2,8 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
 export interface Env {
-  OPENROUTER_API_KEY: string;
-  OPENROUTER_API_KEY: string;
+  GEMINI_API_KEY: string;
   HF_API_KEY?: string;
   CACHE: KVNamespace;
   RATE_LIMIT: KVNamespace;
@@ -31,7 +30,7 @@ app.get('/api/health', (c) => {
     success: true,
     status: 'healthy',
     services: {
-      openRouter: c.env.OPENROUTER_API_KEY ? 'configured' : 'missing',
+      gemini: c.env.GEMINI_API_KEY ? 'configured' : 'missing',
       cache: 'available'
     }
   });
@@ -119,13 +118,13 @@ app.post('/api/chat', async (c) => {
       ? `${systemPrompt}\n\nContext: ${body.context}\n\nStudent question: ${userMessage}`
       : `${systemPrompt}\n\nStudent question: ${userMessage}`;
 
-    // Call Requesty API with MiniMax-M2 model
+    // Call Gemini API
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     // Check if API key is available
-    if (!c.env.OPENROUTER_API_KEY) {
-      console.error('OPENROUTER_API_KEY is not set');
+    if (!c.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not set');
       return c.json({ 
         success: false, 
         error: 'AI service not configured. Please contact support.' 
@@ -133,20 +132,23 @@ app.post('/api/chat', async (c) => {
     }
 
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.2-3b-instruct:free',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage }
+          contents: [
+            {
+              parts: [
+                { text: `${systemPrompt}\n\n${userMessage}` }
+              ]
+            }
           ],
-          max_tokens: parseInt(c.env.MAX_TOKENS || '500'),
-          temperature: parseFloat(c.env.DEFAULT_TEMPERATURE || '0.7')
+          generationConfig: {
+            temperature: parseFloat(c.env.DEFAULT_TEMPERATURE || '0.7'),
+            maxOutputTokens: parseInt(c.env.MAX_TOKENS || '2048'),
+          }
         }),
         signal: controller.signal
       });
@@ -155,19 +157,18 @@ app.post('/api/chat', async (c) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OpenRouter error:', response.status, errorText);
+        console.error('Gemini error:', response.status, errorText);
         
         // Handle specific error codes
         if (response.status === 429) {
           return c.json({ 
             success: false, 
-            error: 'Rate limit exceeded. Please wait 60 seconds before trying again.' 
+            error: 'Rate limit exceeded. Please wait a moment before trying again.' 
           }, 429);
         }
         
         if (response.status === 401 || response.status === 403) {
-          // Check if API key is set
-          const keySet = c.env.OPENROUTER_API_KEY ? 'set' : 'missing';
+          const keySet = c.env.GEMINI_API_KEY ? 'set' : 'missing';
           console.error('Auth error - API key status:', keySet, 'Response:', errorText);
           return c.json({ 
             success: false, 
@@ -191,7 +192,7 @@ app.post('/api/chat', async (c) => {
       }
 
       const data = await response.json() as any;
-      let reply = data.choices?.[0]?.message?.content || '';
+      let reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
       // Check if we got empty response
       if (!reply || reply.trim().length === 0) {
@@ -206,7 +207,7 @@ app.post('/api/chat', async (c) => {
               timestamp: new Date().toISOString(),
               meta: {
                 mode,
-                modelUsed: 'meta-llama/llama-3.2-3b-instruct:free',
+                modelUsed: 'gemini-2.0-flash',
                 error: 'empty_response'
               }
             },
@@ -214,22 +215,9 @@ app.post('/api/chat', async (c) => {
           },
           meta: {
             timestamp: new Date().toISOString(),
-            provider: 'openrouter'
+            provider: 'gemini'
           }
         });
-      }
-
-      // Clean up ALL Mistral model formatting tags
-      reply = reply
-        .replace(/<\/?s>/gi, '')                                    // Remove <s> and </s>
-        .replace(/\[\/?(OUT|INST|OST|B_INST|E_INST)\]/gi, '')      // Remove all instruction tags
-        .replace(/\[\/s>/gi, '')                                    // Remove [/s>
-        .replace(/^\s+|\s+$/g, '')                                  // Trim whitespace
-        .trim();
-
-      // Check again after cleanup
-      if (reply.length === 0) {
-        reply = 'I apologize, but I encountered an issue generating a proper response. Could you please try rephrasing your question?';
       }
 
       // Return in format expected by frontend
@@ -240,18 +228,18 @@ app.post('/api/chat', async (c) => {
           message: {
             id: `msg_${Date.now()}`,
             role: 'assistant',
-            content: reply,
+            content: reply.trim(),
             timestamp: new Date().toISOString(),
             meta: {
               mode,
-              modelUsed: 'meta-llama/llama-3.2-3b-instruct:free'
+              modelUsed: 'gemini-2.0-flash'
             }
           },
           sources: []
         },
         meta: {
           timestamp: new Date().toISOString(),
-          provider: 'openrouter'
+          provider: 'gemini'
         }
       });
 
@@ -326,20 +314,23 @@ Only return valid JSON, no other text.`;
     const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout for quiz generation
 
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.2-3b-instruct:free',
-          messages: [
-            { role: 'system', content: 'You are a quiz generator. Return only valid JSON.' },
-            { role: 'user', content: prompt }
+          contents: [
+            {
+              parts: [
+                { text: `You are a quiz generator. Return only valid JSON.\n\n${prompt}` }
+              ]
+            }
           ],
-          max_tokens: 1500,
-          temperature: 0.7
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          }
         }),
         signal: controller.signal
       });
@@ -348,7 +339,7 @@ Only return valid JSON, no other text.`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OpenRouter quiz error:', response.status, errorText);
+        console.error('Gemini quiz error:', response.status, errorText);
         
         if (response.status === 429) {
           return c.json({ 
@@ -371,7 +362,7 @@ Only return valid JSON, no other text.`;
       }
 
       const data = await response.json() as any;
-      let content = data.choices?.[0]?.message?.content || '';
+      let content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       
       if (!content || content.trim().length === 0) {
         return c.json({ 
@@ -380,11 +371,10 @@ Only return valid JSON, no other text.`;
         }, 500);
       }
 
-      // Clean up Mistral model formatting tags
+      // Clean up any markdown code blocks
       content = content
-        .replace(/<\/?s>/gi, '')
-        .replace(/\[\/?(OUT|INST|OST|B_INST|E_INST)\]/gi, '')
-        .replace(/\[\/s>/gi, '')
+        .replace(/```json\n?/gi, '')
+        .replace(/```\n?/gi, '')
         .trim();
     
       // Extract JSON from response
@@ -509,20 +499,23 @@ Only return valid JSON, no other text.`;
     const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
 
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.2-3b-instruct:free',
-          messages: [
-            { role: 'system', content: 'You are a flashcard generator. Return only valid JSON.' },
-            { role: 'user', content: prompt }
+          contents: [
+            {
+              parts: [
+                { text: `You are a flashcard generator. Return only valid JSON.\n\n${prompt}` }
+              ]
+            }
           ],
-          max_tokens: 1500,
-          temperature: 0.7
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          }
         }),
         signal: controller.signal
       });
@@ -531,7 +524,7 @@ Only return valid JSON, no other text.`;
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('OpenRouter flashcard error:', response.status, errorText);
+        console.error('Gemini flashcard error:', response.status, errorText);
         
         if (response.status === 429) {
           return c.json({ 
@@ -554,7 +547,7 @@ Only return valid JSON, no other text.`;
       }
 
       const data = await response.json() as any;
-      let content = data.choices?.[0]?.message?.content || '';
+      let content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       
       if (!content || content.trim().length === 0) {
         return c.json({ 
@@ -563,11 +556,10 @@ Only return valid JSON, no other text.`;
         }, 500);
       }
 
-      // Clean up Mistral model formatting tags
+      // Clean up any markdown code blocks
       content = content
-        .replace(/<\/?s>/gi, '')
-        .replace(/\[\/?(OUT|INST|OST|B_INST|E_INST)\]/gi, '')
-        .replace(/\[\/s>/gi, '')
+        .replace(/```json\n?/gi, '')
+        .replace(/```\n?/gi, '')
         .trim();
     
       // Extract JSON from response
@@ -652,20 +644,23 @@ Return ONLY a valid JSON object with this structure:
   "summary": "brief summary"
 }`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: [
-          { role: 'system', content: 'You are a content analyzer. Return only valid JSON.' },
-          { role: 'user', content: analysisPrompt }
+        contents: [
+          {
+            parts: [
+              { text: `You are a content analyzer. Return only valid JSON.\n\n${analysisPrompt}` }
+            ]
+          }
         ],
-        max_tokens: 1000,
-        temperature: 0.3
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1000,
+        }
       })
     });
 
@@ -674,7 +669,13 @@ Return ONLY a valid JSON object with this structure:
     }
 
     const data = await response.json() as any;
-    const analysisText = data.choices?.[0]?.message?.content || '';
+    let analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Clean up any markdown code blocks
+    analysisText = analysisText
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/gi, '')
+      .trim();
     
     // Parse JSON from response
     const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
@@ -735,20 +736,23 @@ Return ONLY a valid JSON object:
   "improvements": ["suggestion1", "suggestion2"]
 }`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: [
-          { role: 'system', content: 'You are an educational evaluator. Return only valid JSON.' },
-          { role: 'user', content: evaluationPrompt }
+        contents: [
+          {
+            parts: [
+              { text: `You are an educational evaluator. Return only valid JSON.\n\n${evaluationPrompt}` }
+            ]
+          }
         ],
-        max_tokens: 800,
-        temperature: 0.2
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 800,
+        }
       })
     });
 
@@ -757,7 +761,13 @@ Return ONLY a valid JSON object:
     }
 
     const data = await response.json() as any;
-    const evalText = data.choices?.[0]?.message?.content || '';
+    let evalText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Clean up any markdown code blocks
+    evalText = evalText
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/gi, '')
+      .trim();
     
     const jsonMatch = evalText.match(/\{[\s\S]*\}/);
     const evaluation = jsonMatch ? JSON.parse(jsonMatch[0]) : {
@@ -877,20 +887,23 @@ Generate insights in this JSON format:
   "focusAreas": ["area1", "area2"]
 }`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: [
-          { role: 'system', content: 'You are an educational analytics assistant. Return only valid JSON.' },
-          { role: 'user', content: insightsPrompt }
+        contents: [
+          {
+            parts: [
+              { text: `You are an educational analytics assistant. Return only valid JSON.\n\n${insightsPrompt}` }
+            ]
+          }
         ],
-        max_tokens: 1000,
-        temperature: 0.4
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1000,
+        }
       })
     });
 
@@ -899,7 +912,13 @@ Generate insights in this JSON format:
     }
 
     const data = await response.json() as any;
-    const insightsText = data.choices?.[0]?.message?.content || '';
+    let insightsText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Clean up any markdown code blocks
+    insightsText = insightsText
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/gi, '')
+      .trim();
     
     const jsonMatch = insightsText.match(/\{[\s\S]*\}/);
     const insights = jsonMatch ? JSON.parse(jsonMatch[0]) : {
@@ -966,20 +985,23 @@ Return a JSON object with clustered concepts:
   ]
 }`;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: [
-          { role: 'system', content: 'You are a concept mapping specialist. Return only valid JSON.' },
-          { role: 'user', content: clusterPrompt }
+        contents: [
+          {
+            parts: [
+              { text: `You are a concept mapping specialist. Return only valid JSON.\n\n${clusterPrompt}` }
+            ]
+          }
         ],
-        max_tokens: 1200,
-        temperature: 0.3
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1200,
+        }
       })
     });
 
@@ -988,7 +1010,13 @@ Return a JSON object with clustered concepts:
     }
 
     const data = await response.json() as any;
-    const clusterText = data.choices?.[0]?.message?.content || '';
+    let clusterText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Clean up any markdown code blocks
+    clusterText = clusterText
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/gi, '')
+      .trim();
     
     const jsonMatch = clusterText.match(/\{[\s\S]*\}/);
     const clustering = jsonMatch ? JSON.parse(jsonMatch[0]) : {
@@ -1057,23 +1085,23 @@ Also provide 3-5 productivity tips at the end.`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${c.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${c.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are a productivity expert helping students create optimal daily schedules. Be specific with times and practical with recommendations.' 
-          },
-          { role: 'user', content: prompt }
+        contents: [
+          {
+            parts: [
+              { text: `You are a productivity expert helping students create optimal daily schedules. Be specific with times and practical with recommendations.\n\n${prompt}` }
+            ]
+          }
         ],
-        max_tokens: 1500,
-        temperature: 0.7
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1500,
+        }
       }),
       signal: controller.signal
     });
@@ -1082,15 +1110,15 @@ Also provide 3-5 productivity tips at the end.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter error:', response.status, errorText);
+      console.error('Gemini error:', response.status, errorText);
       return c.json({ 
         success: false, 
         error: 'Failed to generate routine schedule' 
-      }, response.status);
+      }, 500);
     }
 
     const data = await response.json() as any;
-    const aiResponse = data.choices?.[0]?.message?.content || '';
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     if (!aiResponse || aiResponse.trim().length === 0) {
       return c.json({

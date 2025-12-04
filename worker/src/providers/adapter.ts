@@ -22,7 +22,7 @@ interface ProviderResponse {
 }
 
 const PROVIDERS = [
-  { name: 'openrouter', priority: 1, enabled: true },
+  { name: 'gemini', priority: 1, enabled: true },
   { name: 'huggingface', priority: 2, enabled: true }
 ];
 
@@ -33,8 +33,8 @@ export async function callProvider(env: Env, request: ProviderRequest): Promise<
 
   for (const provider of sortedProviders) {
     try {
-      if (provider.name === 'openrouter') {
-        return await callOpenRouter(env, request);
+      if (provider.name === 'gemini') {
+        return await callGemini(env, request);
       } else if (provider.name === 'huggingface') {
         return await callHuggingFace(env, request);
       }
@@ -47,35 +47,41 @@ export async function callProvider(env: Env, request: ProviderRequest): Promise<
   throw new Error('All providers failed');
 }
 
-async function callOpenRouter(env: Env, request: ProviderRequest): Promise<ProviderResponse> {
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+async function callGemini(env: Env, request: ProviderRequest): Promise<ProviderResponse> {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://studybuddy.app',
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-3-haiku',
-      messages: [{ role: 'user', content: request.prompt }],
-      temperature: request.temperature,
-      max_tokens: request.maxTokens,
+      contents: [
+        {
+          parts: [
+            { text: request.prompt }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: request.temperature,
+        maxOutputTokens: request.maxTokens,
+      }
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.statusText}`);
+    throw new Error(`Gemini API error: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any;
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
   return {
-    content: data.choices[0].message.content,
-    provider: 'openrouter',
+    content,
+    provider: 'gemini',
     usage: {
-      promptTokens: data.usage.prompt_tokens,
-      completionTokens: data.usage.completion_tokens,
-      totalTokens: data.usage.total_tokens,
+      promptTokens: data.usageMetadata?.promptTokenCount || Math.floor(request.prompt.length / 4),
+      completionTokens: data.usageMetadata?.candidatesTokenCount || Math.floor(content.length / 4),
+      totalTokens: data.usageMetadata?.totalTokenCount || Math.floor((request.prompt.length + content.length) / 4),
     },
   };
 }
@@ -103,7 +109,7 @@ async function callHuggingFace(env: Env, request: ProviderRequest): Promise<Prov
     throw new Error(`HuggingFace API error: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as any[];
   const content = data[0]?.generated_text || '';
 
   return {

@@ -26,12 +26,12 @@ export async function flashcardHandler(c: Context<{ Bindings: Env }>) {
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     return c.json({
       success: false,
       error: {
         code: 'FLASHCARD_GENERATION_ERROR',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }
     }, 500);
   }

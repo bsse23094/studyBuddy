@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface QuizQuestion {
   question: string;
@@ -953,7 +954,7 @@ export class QuizComponent {
 
     try {
       const response = await this.http.post<{ success: boolean; data?: { questions: QuizQuestion[] }; error?: string }>(
-        'https://studybuddy-worker.bsse23094.workers.dev/api/quiz/generate',
+        `${environment.apiUrl}/api/quiz/generate`,
         {
           topic: this.topic,
           difficulty: this.difficulty,

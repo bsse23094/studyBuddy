@@ -3,16 +3,17 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 # Environment variables (set via `wrangler secret put <KEY>`)
-# OPENROUTER_API_KEY - Required for AI chat/quiz/flashcard generation
+# GEMINI_API_KEY - Required for AI chat/quiz/flashcard generation
 # HF_API_KEY - Fallback provider (optional)
 # PINECONE_API_KEY - For vector search RAG (optional, falls back to keyword search)
 # PINECONE_HOST - Pinecone index host URL
 
 [vars]
 ENVIRONMENT = "production"
-MAX_TOKENS = 2048
-DEFAULT_TEMPERATURE = 0.7
+MAX_TOKENS = "2048"
+DEFAULT_TEMPERATURE = "0.7"
 ALLOWED_ORIGINS = "http://localhost:4200,https://bsse23094.github.io"
+GEMINI_API_KEY = "AIzaSyCMhL-g6bG1C4dGpnLkiJvbR6uG3FTW8xY"
 
 # KV namespaces for caching and rate limiting
 [[kv_namespaces]]

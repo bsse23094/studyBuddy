@@ -136,7 +136,7 @@ async function callHuggingFace(
   }
 
   // Convert HF response to OpenAI-compatible format
-  const hfResponse = await response.json();
+  const hfResponse = await response.json() as any;
   const text = Array.isArray(hfResponse) ? hfResponse[0]?.generated_text : hfResponse.generated_text;
 
   return new Response(
@@ -160,27 +160,26 @@ export async function generateEmbedding(
   text: string,
   env: any
 ): Promise<number[]> {
-  // Try OpenRouter embedding endpoint
-  if (env.OPENROUTER_API_KEY) {
+  // Try Gemini embedding endpoint
+  if (env.GEMINI_API_KEY) {
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'text-embedding-3-small',
-          input: text
+          model: 'models/text-embedding-004',
+          content: { parts: [{ text }] }
         })
       });
 
       if (response.ok) {
-        const data = await response.json();
-        return data.data[0].embedding;
+        const data = await response.json() as any;
+        return data.embedding?.values || [];
       }
     } catch (error) {
-      console.error('OpenRouter embedding failed:', error);
+      console.error('Gemini embedding failed:', error);
     }
   }
 

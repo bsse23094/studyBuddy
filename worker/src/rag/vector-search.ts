@@ -44,7 +44,7 @@ export async function generateEmbedding(env: Env, text: string): Promise<number[
       throw new Error(`Embedding API error: ${response.statusText}`);
     }
 
-    const embedding = await response.json();
+    const embedding = await response.json() as number[];
     return embedding;
 
   } catch (error) {

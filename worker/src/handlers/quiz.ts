@@ -38,12 +38,12 @@ export async function quizHandler(c: Context<{ Bindings: Env }>) {
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     return c.json({
       success: false,
       error: {
         code: 'QUIZ_GENERATION_ERROR',
-        message: error.message
+        message: error instanceof Error ? error.message : 'Unknown error'
       }
     }, 500);
   }

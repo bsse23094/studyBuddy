@@ -8,7 +8,8 @@ Complete serverless backend for StudyBuddy educational platform. Deployed on Clo
 ✅ **Adaptive Quiz Generation** - AI-generated quizzes from topics or documents  
 ✅ **Flashcard Creation** - Auto-generate flashcards for spaced repetition  
 ✅ **Document Processing** - Upload, chunk, embed, and search course materials  
-✅ **Provider Fallback** - OpenRouter → Hugging Face automatic failover  
+✅ **Google Gemini AI** - Powered by Gemini 2.0 Flash for fast, accurate responses  
+✅ **Provider Fallback** - Gemini → Hugging Face automatic failover  
 ✅ **Rate Limiting** - 100 requests/minute per IP  
 ✅ **Response Caching** - 1-hour cache for identical queries  
 ✅ **CORS Support** - GitHub Pages frontend integration  
@@ -27,7 +28,7 @@ Complete serverless backend for StudyBuddy educational platform. Deployed on Clo
 │ Worker (Edge)   │
 └────────┬────────┘
          │
-         ├→ OpenRouter API (Primary)
+         ├→ Google Gemini API (Primary)
          ├→ Hugging Face (Fallback)
          └→ KV Storage (Cache + Rate Limit)
 ```
@@ -205,9 +206,9 @@ preview_id = "your_rate_limit_preview_id"
 
 ### 4. Set Secrets
 ```bash
-# Required: OpenRouter API Key (free tier available)
-npx wrangler secret put OPENROUTER_API_KEY
-# Get your key at: https://openrouter.ai/keys
+# Required: Google Gemini API Key
+npx wrangler secret put GEMINI_API_KEY
+# Get your key at: https://aistudio.google.com/apikey
 
 # Optional: Hugging Face API Key (fallback)
 npx wrangler secret put HF_API_KEY
@@ -250,7 +251,7 @@ export const environment = {
 | Service | Free Tier Limit | Notes |
 |---------|----------------|--------|
 | Cloudflare Workers | 100K req/day | More than enough for learning |
-| OpenRouter (Llama 3.1 8B) | Free | Community-supported |
+| Google Gemini API | Free tier available | 15 requests/min, 1M tokens/min |
 | Hugging Face Inference | 30K chars/month | Fallback only |
 | Cloudflare KV | 100K reads/day | Sufficient for caching |
 
@@ -266,7 +267,7 @@ ALLOWED_ORIGINS = "https://your-domain" # CORS whitelist
 ```
 
 ### Secrets (via wrangler secret put)
-- `OPENROUTER_API_KEY` - **Required** for AI chat/quiz/flashcards
+- `GEMINI_API_KEY` - **Required** for AI chat/quiz/flashcards (Google Gemini)
 - `HF_API_KEY` - Optional fallback provider
 - `PINECONE_API_KEY` - Optional for production RAG
 - `PINECONE_HOST` - Pinecone index host URL
@@ -304,8 +305,8 @@ npx wrangler kv:key list --binding=RATE_LIMIT
 ## Troubleshooting
 
 ### "AI provider not available"
-- Check `OPENROUTER_API_KEY` is set: `npx wrangler secret list`
-- Verify key at: https://openrouter.ai/keys
+- Check `GEMINI_API_KEY` is set: `npx wrangler secret list`
+- Verify key at: https://aistudio.google.com/apikey
 
 ### CORS errors
 - Add your frontend domain to `ALLOWED_ORIGINS` in `wrangler.toml`
@@ -316,7 +317,7 @@ npx wrangler kv:key list --binding=RATE_LIMIT
 - Or implement user-based rate limiting
 
 ### Embedding errors
-- OpenRouter embeddings may not be available on free tier
+- Gemini embeddings require a valid API key
 - Worker falls back to simple TF-IDF embeddings
 - For production, add Pinecone API key
 
@@ -325,7 +326,7 @@ npx wrangler kv:key list --binding=RATE_LIMIT
 For a typical student using the app daily:
 - **Frontend**: $0 (GitHub Pages is free)
 - **Backend**: $0 (within Cloudflare Workers free tier)
-- **AI API**: $0 (OpenRouter free tier)
+- **AI API**: $0 (Google Gemini free tier)
 - **Total**: **$0/month** 🎉
 
 ## Security
@@ -344,15 +345,16 @@ For a typical student using the app daily:
 - No cold starts (unlike Lambda)
 - Built-in KV storage
 
-**Why OpenRouter?**
-- Unified API for multiple models
-- Free tier available (Llama 3.1 8B)
-- Automatic failover to other models
-- No credit card required
+**Why Google Gemini?**
+- State-of-the-art AI model (Gemini 2.0 Flash)
+- Generous free tier (15 RPM, 1M tokens/min)
+- Fast response times
+- Excellent for educational content
+- No credit card required for free tier
 
 **Why client-side embeddings fallback?**
 - Keeps worker lightweight
-- OpenRouter embeddings may cost $
+- Gemini embeddings are efficient
 - Simple TF-IDF works for small docs
 - Upgrade to Pinecone for production
 

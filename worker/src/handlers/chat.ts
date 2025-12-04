@@ -72,14 +72,14 @@ export async function chatHandler(c: Context<{ Bindings: Env }>) {
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Chat handler error:', error);
     return c.json({
       success: false,
       error: {
         code: 'CHAT_ERROR',
         message: 'Failed to process chat request',
-        details: error.message
+        details: error instanceof Error ? error.message : 'Unknown error'
       }
     }, 500);
   }

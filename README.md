@@ -44,7 +44,7 @@ StudyBuddy is a comprehensive, AI-powered educational platform that revolutioniz
 - **Error Handling**: Graceful error recovery with retry mechanisms
 
 **Technical Implementation:**
-- Uses Google Gemini 1.5 Flash API for fast, cost-effective responses
+- Uses Google Gemini 2.0 Flash API for fast, cost-effective responses
 - Implements conversation history management with localStorage persistence
 - Vector search integration for document-based Q&A
 - Automatic context window management (up to 1M tokens)
