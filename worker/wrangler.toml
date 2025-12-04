@@ -13,7 +13,9 @@ ENVIRONMENT = "production"
 MAX_TOKENS = "2048"
 DEFAULT_TEMPERATURE = "0.7"
 ALLOWED_ORIGINS = "http://localhost:4200,https://bsse23094.github.io"
-GEMINI_API_KEY = "AIzaSyCMhL-g6bG1C4dGpnLkiJvbR6uG3FTW8xY"
+
+# GEMINI_API_KEY should be set as a secret using:
+# npx wrangler secret put GEMINI_API_KEY
 
 # KV namespaces for caching and rate limiting
 [[kv_namespaces]]
