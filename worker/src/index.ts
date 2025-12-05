@@ -114,9 +114,40 @@ app.post('/api/chat', async (c) => {
         systemPrompt = 'You are a helpful tutor. Explain this concept clearly and concisely.';
     }
 
-    const fullPrompt = body.context 
-      ? `${systemPrompt}\n\nContext: ${body.context}\n\nStudent question: ${userMessage}`
-      : `${systemPrompt}\n\nStudent question: ${userMessage}`;
+    // Build conversation history for Gemini API
+    const contents: any[] = [];
+    
+    // Add system instruction as first message
+    contents.push({
+      role: 'user',
+      parts: [{ text: systemPrompt }]
+    });
+    contents.push({
+      role: 'model',
+      parts: [{ text: 'Understood. I will help as requested.' }]
+    });
+
+    // Add conversation history if provided
+    if (body.messages && Array.isArray(body.messages)) {
+      // Convert message history to Gemini format (skip the last user message, we'll add it separately)
+      for (let i = 0; i < body.messages.length - 1; i++) {
+        const msg = body.messages[i];
+        contents.push({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }]
+        });
+      }
+    }
+
+    // Add current user message
+    const finalMessage = body.context 
+      ? `Context: ${body.context}\n\n${userMessage}`
+      : userMessage;
+    
+    contents.push({
+      role: 'user',
+      parts: [{ text: finalMessage }]
+    });
 
     // Call Gemini API
     const controller = new AbortController();
@@ -138,13 +169,7 @@ app.post('/api/chat', async (c) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: `${systemPrompt}\n\n${userMessage}` }
-              ]
-            }
-          ],
+          contents: contents,
           generationConfig: {
             temperature: parseFloat(c.env.DEFAULT_TEMPERATURE || '0.7'),
             maxOutputTokens: parseInt(c.env.MAX_TOKENS || '2048'),
